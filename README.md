@@ -15,7 +15,7 @@ It reads from `STDIN` and outputs on `STDOUT`.
 Converting our `Cargo.toml` to YAML
 
 ```shell
-cyd --input-type toml --output-type yaml < Cargo.toml
+cyd --input toml --output yaml < Cargo.toml
 ```
 
 ## Caveats
