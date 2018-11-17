@@ -15,14 +15,6 @@ use std::io::prelude::*;
 #[macro_use]
 extern crate clap;
 
-// An enum holding our return values from the input data.
-#[derive(Debug)]
-enum InputData {
-    JSON(serde_json::Value),
-    TOML(toml::Value),
-    YAML(serde_yaml::Value),
-}
-
 // VALID_FORMATS is an array of possible formats we can convert to/from, used
 // in the clap argument parsing phase.
 // Values are matched case-insensitively.
@@ -31,6 +23,50 @@ static VALID_FORMATS: &'static [&'static str] = &[
     "toml", // toml
     "yaml", // serde_yaml
 ];
+
+// An enum holding our return values from the input data.
+#[derive(Debug)]
+enum InputData {
+    JSON(serde_json::Value),
+    TOML(toml::Value),
+    YAML(serde_yaml::Value),
+}
+
+impl InputData {
+    fn to_json(&self, out: impl Write) -> Result<(), serde_json::Error> {
+        match self {
+            InputData::JSON(v) => serde_json::to_writer(out, &v),
+            InputData::TOML(v) => serde_json::to_writer(out, &v),
+            InputData::YAML(v) => serde_json::to_writer(out, &v),
+        }
+    }
+
+    fn to_toml(&self, mut out: impl Write) -> Result<(), toml::ser::Error> {
+        // The toml crate doesn't support the to_writer method, so output is a
+        // little more verbose here.
+        let output = match self {
+            InputData::JSON(v) => toml::to_string(&v),
+            InputData::TOML(v) => toml::to_string(&v),
+            InputData::YAML(v) => toml::to_string(&v),
+        };
+
+        match output {
+            Ok(s) => {
+                write!(out, "{}", s);
+                Ok(())
+            },
+            Err(e) => Err(e),
+        }
+    }
+
+    fn to_yaml(&self, out: impl Write) -> Result<(), serde_yaml::Error> {
+        match self {
+            InputData::JSON(v) => serde_yaml::to_writer(out, &v),
+            InputData::TOML(v) => serde_yaml::to_writer(out, &v),
+            InputData::YAML(v) => serde_yaml::to_writer(out, &v),
+        }
+    }
+}
 
 fn main() {
     let app = clap::App::new(crate_name!())
@@ -123,13 +159,7 @@ fn main() {
     // away.
     match output_type.to_lowercase().as_ref() {
         "json" => {
-            let output = match input {
-                InputData::JSON(v) => serde_json::to_writer(stdout, &v),
-                InputData::TOML(v) => serde_json::to_writer(stdout, &v),
-                InputData::YAML(v) => serde_json::to_writer(stdout, &v),
-            };
-
-            match output {
+            match input.to_json(stdout) {
                 Ok(_) => {},
                 Err(e) => {
                     eprintln!("JSON Error: {}", e);
@@ -138,15 +168,8 @@ fn main() {
             }
         },
         "toml" => {
-            // No to_writer here
-            let output = match input {
-                InputData::JSON(v) => toml::to_string(&v),
-                InputData::TOML(v) => toml::to_string(&v),
-                InputData::YAML(v) => toml::to_string(&v),
-            };
-
-            match output {
-                Ok(s) => println!("{}", s),
+            match input.to_toml(stdout) {
+                Ok(_) => {},
                 Err(e) => {
                     eprintln!("TOML Error: {}", e);
                     ::std::process::exit(1);
@@ -154,13 +177,7 @@ fn main() {
             }
         },
         "yaml" => {
-            let output = match input {
-                InputData::JSON(v) => serde_yaml::to_writer(stdout, &v),
-                InputData::TOML(v) => serde_yaml::to_writer(stdout, &v),
-                InputData::YAML(v) => serde_yaml::to_writer(stdout, &v),
-            };
-
-            match output {
+            match input.to_yaml(stdout) {
                 Ok(_) => {},
                 Err(e) => {
                     eprintln!("YAML Error: {}", e);
