@@ -10,6 +10,8 @@ between:
 
 It reads from `STDIN` and outputs on `STDOUT`.
 
+`cyd` requires at least Rust 1.31.
+
 ## Example Usage
 
 Converting our `Cargo.toml` to YAML

@@ -10,10 +10,12 @@
 //
 use std::io;
 use std::io::prelude::*;
-
-// Macro using crates
-#[macro_use]
-extern crate clap;
+use clap::{
+    crate_authors,
+    crate_description,
+    crate_name,
+    crate_version,
+};
 
 // VALID_FORMATS is an array of possible formats we can convert to/from, used
 // in the clap argument parsing phase.
