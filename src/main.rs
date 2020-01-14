@@ -54,7 +54,7 @@ impl InputData {
 
         match output {
             Ok(s) => {
-                write!(out, "{}", s);
+                write!(out, "{}", s).unwrap();
                 Ok(())
             },
             Err(e) => Err(e),
